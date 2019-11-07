@@ -1,8 +1,19 @@
 # -*- coding: utf-8 -*-
 import base64
 import json
-import urllib
-import urllib2
+
+try:
+    import urllib
+    import urllib2
+    from urllib2 import urlopen
+    from urllib2 import Request
+    from urllib import urlencode
+    is_python3 = False
+except:
+    from urllib.request import Request
+    from urllib.parse import urlencode
+    from urllib.request import urlopen
+    is_python3 = True
 
 
 class Client:
@@ -26,20 +37,22 @@ class Client:
 
     def get_json_data(self,query_str,page=1,fields=""):
         api_full_url = "%s%s" % (self.base_url,self.search_api_url)
-        param = {"qbase64":base64.b64encode(query_str),"email":self.email,"key":self.key,"page":page,"fields":fields}
+        param = {"qbase64":base64.b64encode(query_str.encode()),"email":self.email,"key":self.key,"page":page,"fields":fields}
         res = self.__http_get(api_full_url,param)
         return res
 
 
     def __http_get(self,url,param):
-        param = urllib.urlencode(param)
+        param = urlencode(param)
         url = "%s?%s" % (url,param)
         try:
-            req = urllib2.Request(url)
-            res = urllib2.urlopen(req).read()
+            req = Request(url)
+            res = urlopen(req).read()
+            if is_python3:
+                res = res.decode()
             if "errmsg" in res:
                 raise RuntimeError(res)
-        except urllib2.HTTPError,e:
-            print "errmsg："+e.read(),
+        except Exception as e:
+            print("errmsg："+e.read())
             raise e
         return res
